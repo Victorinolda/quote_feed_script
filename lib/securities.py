@@ -7,9 +7,12 @@ def get_active_securities_isin() -> list[str]:
         'Authorization': TOKEN_BLUEPILL,
         'content-type':'application/json',
     }
-
     try:
+        print(SECUTIRY_URL)
         r = requests.get(url=SECUTIRY_URL, headers=HEADERS)
+        if r.status_code != 200:
+            raise Exception(f"Error fetching securities: {r.status_code} - {r.text}")
+
         data = r.json()
         results = data.get("results", [])
         filter_result = list(filter(lambda security: security["cob_market_status"] == "open"\

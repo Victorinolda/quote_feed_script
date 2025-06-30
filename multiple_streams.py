@@ -10,6 +10,7 @@ import concurrent.futures
 
 
 def process_multiple_streams(yield_value: float = 10.0):
+    print(f"yield_value: {yield_value}")
     securities = get_active_securities_isin()
     if not securities:
         print("No active securities found.")
