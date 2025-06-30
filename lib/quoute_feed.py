@@ -48,7 +48,7 @@ def post_quote_feed(payload:QuoteFeed):
         data_as_json = json.dumps(payload)
         time.sleep(SLEEP_TIME_POST_QUOTE_FEED) 
         r =  requests.post(url=URL_PLUTUS, data=data_as_json, headers=HEADERS)
-        if r.status_code != 200:
+        if r.status_code < 200 or r.status_code >= 300:
             raise Exception(f"Failed to post quote feed: {r.text}")
         print(f"Processing single stream for {payload['isin']} with yield: {payload['value']}, direction: {payload['data_type']}")
     except Exception as e:

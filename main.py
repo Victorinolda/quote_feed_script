@@ -19,6 +19,11 @@ def main():
 
         base_yield = args[1] if len(args) > 1 else BASE_YIELD
         print("using yield {}".format(base_yield))
+        try:
+            yield_as_float = float(base_yield)
+        except ValueError:
+            print(f"Invalid yield value '{base_yield}', using default {BASE_YIELD}")
+            yield_as_float = BASE_YIELD
 
         base_direction = args[2] if len(args) > 2 else DEFAULT_DIRECTION
         if base_direction in ["bid", "ask", "both"]:
