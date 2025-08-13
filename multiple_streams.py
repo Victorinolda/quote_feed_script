@@ -25,6 +25,10 @@ def process_multiple_streams(yield_value: float = 10.0):
 
 
     payloads_by_isin:Dict[str,List[QuoteFeed]] = {}
+    payloads_by_isin_ask:Dict[str,List[QuoteFeed]] = {}
+    payloads_by_isin_bid:Dict[str,List[QuoteFeed]] = {}
+
+
 
     for isin in securities:
         bid_payloads = QuoteFeedFactory.bulk_create(
@@ -41,15 +45,17 @@ def process_multiple_streams(yield_value: float = 10.0):
             quote_feed_id=QUOTE_ID,
             timestamp=TIMESTAMP
         )
-        payloads = bid_payloads + ask_payloads
-        shuffle(payloads)
-        payloads_by_isin[isin] = payloads
+        payloads_by_isin[isin] = {
+            "bid": bid_payloads,
+            "ask": ask_payloads
+        }
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
         threads = []
         for isin, payloads in payloads_by_isin.items():
             time.sleep(2)
             threads.append(executor.submit(post_quote_feed_bulk, payloads))
+
 
 
 

@@ -2,10 +2,12 @@
 
 import json
 import time
+from types import new_class
 from typing import List, TypedDict
 
 import requests
 from config.config import HEADERS, URL_PLUTUS,SLEEP_TIME_POST_QUOTE_FEED
+from lib.utilies import new_time_stamp
 
 
 class QuoteFeed(TypedDict):
@@ -36,7 +38,7 @@ class QuoteFeedFactory:
                 data_type=data_type,
                 value=value,
                 quote_feed_id=quote_feed_id,
-                timestamp=timestamp
+                timestamp=new_time_stamp()
             )
             quote_feeds.append(quote_feed)
 
@@ -47,7 +49,9 @@ def post_quote_feed(payload:QuoteFeed):
     try:
         data_as_json = json.dumps(payload)
         time.sleep(SLEEP_TIME_POST_QUOTE_FEED) 
+        print(URL_PLUTUS, data_as_json, HEADERS)
         r =  requests.post(url=URL_PLUTUS, data=data_as_json, headers=HEADERS)
+        print(r.text)
         if r.status_code < 200 or r.status_code >= 300:
             raise Exception(f"Failed to post quote feed: {r.text}")
         print(f"Processing single stream for {payload['isin']} with yield: {payload['value']}, direction: {payload['data_type']}")
@@ -56,8 +60,12 @@ def post_quote_feed(payload:QuoteFeed):
 
 def post_quote_feed_bulk(payloads: List[QuoteFeed]):
     try:
-        for payload in payloads:
-            post_quote_feed(payload)
+        bids = payloads.get("bid", [])
+        asks = payloads.get("ask", [])
+
+        for i in range(len(bids)):
+            post_quote_feed(bids[i])
+            post_quote_feed(asks[i])
     except Exception as e:
         print(e)
 

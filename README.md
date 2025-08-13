@@ -1,52 +1,50 @@
 # quote_feed_script
-
-To run this script you need to have installed Pipenv and have the .env file in the root directory.
-
-# Install dependencies
+to run this script, you need to run the following commands:
 
 ```bash
-pipenv install
+direnv allow
 ```
 
-# Run into the virtual environment
+after that, to start the script, run:
 
 ```bash
-pipenv shell
+just init
 ```
 
-# run the script
+this will copy the `.env.example` file to `.env` and install the dependencies.
 
-There is two modes to run the script:
-
-- Single mode: run the script with a single quote
-- Multiple mode: run the script with multiple securities (in this moment only for m-bonos)
-
-## Single mode
+before running the script, you need to set the environment variables in the `.env` file. You can use the `.env.example` file as a reference.
+after setting the environment variables, you can run some of the following commands:
 
 ```bash
-python3 main.py single yield_value direction
+just simulate
 ```
 
-where `yield_value` is the yield value of the quote and `direction` is the direction of the quote (ask, bid and both).
-by default the direction is bid and the yield value is 10
-You can also config the security in the .env file with the variable `ISIN`.
-Both direction send quotes for the same security in ask and bid.
-
-## Multiple mode
+- this will run the script to create multiple quotes for all the active securities, with a yield of 10
 
 ```bash
-python3 main.py multiple yield_value
+just single
 ```
 
-where `yield_value` is the yield value of the quote, the default value is 10.
-this script only work for m-bonos
-
-# Example
+- this will create a single quote for the security specified in the `.env` file, with a yield of 10
 
 ```bash
-python3 main.py single 10 bid
+just both
 ```
 
+- this will create ask and bid quotes for the security specified in the `.env` file, with a yield of 10
+
+if you need to run the script with a different yield, you can run the following command:
+
 ```bash
-python3 main.py multiple 10
+pipenv run python main.py multiple <yield>
 ```
+
+this will run the script to create multiple quotes for all the active securities, with the specified yield.
+or
+
+```bash
+pipenv run python main.py single <direction>  <yield>
+```
+
+this will create a single quote for the security specified in the `.env` file, with the specified yield and direction (ask, bid or both).
