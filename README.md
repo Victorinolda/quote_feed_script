@@ -1,5 +1,4 @@
 # quote_feed_script
-
 to run this script, you need to run the following commands:
 
 ```bash
