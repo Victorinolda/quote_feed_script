@@ -2,7 +2,7 @@
 from lib.quoute_feed import QuoteFeedFactory, post_quote_feed
 from lib.utilies import generate_array_yield, countdown
 
-from config.config import ISIN, QUOTE_ID, NUMBER_OF_QUOTES, TIMESTAMP
+from config.config import ISIN, QUOTE_ID, NUMBER_OF_QUOTES, SLEEP_TIME_POST_QUOTE_FEED, TIMESTAMP
 
 def process_single_stream(yield_value: float , direction: str = "bid"):
     if direction not in ["bid", "ask", "both"]:
@@ -33,9 +33,6 @@ def process_single_stream(yield_value: float , direction: str = "bid"):
             timestamp=TIMESTAMP
         )
         payloads = bid_payloads + ask_payloads
-        ## re-order in random order
-        import random
-        random.shuffle(payloads)
     else:
         range_yield_values = generate_array_yield(yield_value, NUMBER_OF_QUOTES, direction)
         payloads = QuoteFeedFactory.bulk_create(
@@ -51,7 +48,6 @@ def process_single_stream(yield_value: float , direction: str = "bid"):
         if payload["value"] < 0:
             print(f"Yield value {payload['value']} is negative, skipping.")
             continue
-        post_quote_feed(payload)
-
+        post_quote_feed(payload )
 
     

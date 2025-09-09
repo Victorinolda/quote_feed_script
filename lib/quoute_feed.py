@@ -45,11 +45,12 @@ class QuoteFeedFactory:
         return quote_feeds
 
 
-def post_quote_feed(payload:QuoteFeed):
+def post_quote_feed(payload:QuoteFeed, is_bulk: bool = False):
     try:
         data_as_json = json.dumps(payload)
-        time.sleep(SLEEP_TIME_POST_QUOTE_FEED) 
-        print(URL_PLUTUS, data_as_json, HEADERS)
+        if not is_bulk:
+            time.sleep(SLEEP_TIME_POST_QUOTE_FEED) 
+        # print(URL_PLUTUS, data_as_json, HEADERS)
         r =  requests.post(url=URL_PLUTUS, data=data_as_json, headers=HEADERS)
         print(r.text)
         if r.status_code < 200 or r.status_code >= 300:
@@ -58,14 +59,17 @@ def post_quote_feed(payload:QuoteFeed):
     except Exception as e:
         print(e)
 
-def post_quote_feed_bulk(payloads: List[QuoteFeed]):
+def post_quote_feed_bulk(payloads: List[QuoteFeed], is_bulk: bool = False):
     try:
         bids = payloads.get("bid", [])
         asks = payloads.get("ask", [])
 
         for i in range(len(bids)):
-            post_quote_feed(bids[i])
-            post_quote_feed(asks[i])
+
+            post_quote_feed(bids[i], is_bulk)
+            post_quote_feed(asks[i], is_bulk)
+            if is_bulk:
+                time.sleep(SLEEP_TIME_POST_QUOTE_FEED)
     except Exception as e:
         print(e)
 
