@@ -3,7 +3,7 @@ init:
     -cp --no-clobber .env.example .env
     pipenv install --dev
 
-simulate:
+multiple:
     pipenv run python3 main.py multiple 10
 
 single:
@@ -11,3 +11,6 @@ single:
 
 both:
     pipenv run python3 main.py single 10 both
+
+simulate:
+    pipenv run python3 main.py simulate

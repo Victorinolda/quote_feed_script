@@ -13,7 +13,7 @@ def main():
     if len(args) > 0:
 
         execution_type = args[0] if len(args) > 0 else DEFAULT_EXECUTION
-        if execution_type not in ["single", "multiple"]:
+        if execution_type not in ["single", "multiple", "simulate"]:
             print(f"Invalid execution type '{execution_type}', using default '{DEFAULT_EXECUTION}'")
             execution_type = DEFAULT_EXECUTION
 
@@ -38,6 +38,9 @@ def main():
     elif execution_type == "multiple":
         from multiple_streams import process_multiple_streams
         process_multiple_streams(yield_value=yield_as_float)
+    elif execution_type == "simulate":
+        from simulate_market import simulate_market_volatility
+        simulate_market_volatility()
 
 if __name__ == "__main__":
     main()
