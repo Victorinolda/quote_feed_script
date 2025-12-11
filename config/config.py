@@ -4,6 +4,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def get_env_from_host(host: str) -> str:
+    lower_host = host.lower()
+    if lower_host == "" or "localhost" in lower_host:
+        return "LOCAL"
+    elif "dev" in lower_host:
+        return "DEV"
+    elif "staging" in lower_host:
+        return "staging"
+    elif "qa" in lower_host:
+        return "QA"
+    else:
+        return "unknown"
+
+
 TOKEN_PISTIS = os.getenv("TOKEN_PISTIS", None)
 TOKEN_BLUEPILL = os.getenv("TOKEN_BLUEPILL", None)
 QUOTE_ID = os.getenv("QUOTE_ID", "")
@@ -34,4 +48,5 @@ HEADERS = {
 SLEEP_TIME_POST_QUOTE_FEED = float(os.getenv("SLEEP_TIME_POST_QUOTE_FEED", 1))
 ISIN = os.getenv("ISIN", "MX0MGO0001E4")  # Default ISIN
 NUMBER_OF_QUOTES = int(os.getenv("NUMBER_OF_QUOTES", 10))  # Default number of quotes
-ENV = os.getenv("ENV", "local")
+# env if base on the BLUEPILL_HOST
+ENV = get_env_from_host(BLUEPILL_HOST)
