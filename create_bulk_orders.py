@@ -1,4 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 import random
+import threading
 from typing import Dict
 import time
 import json
@@ -108,18 +110,19 @@ class CreateBulkOrders:
         return f"{isin}_{direction.value}"
 
     def get_isin_and_direction_from_key(self) -> tuple[str, OrderDirection]:
-        isin = self.choose_isin()
-        direction = self.choose_direction()
-        key = self.generate_key(isin, direction)
-        if self.last_security == key:
-            print("Skipping same security as last iteration.")
-            # Avoid repeating the same security and direction
+        with self._lock:
             isin = self.choose_isin()
             direction = self.choose_direction()
             key = self.generate_key(isin, direction)
-            self.last_security = key
+            if self.last_security == key:
+                print("Skipping same security as last iteration.")
+                # Avoid repeating the same security and direction
+                isin = self.choose_isin()
+                direction = self.choose_direction()
+                key = self.generate_key(isin, direction)
+                self.last_security = key
+                return isin, direction
             return isin, direction
-        return isin, direction
 
     def make_match(
         self, new_yield: float, isin: str, direction: OrderDirection
@@ -220,6 +223,114 @@ class CreateBulkOrders:
             else:
                 time.sleep(0.1)
 
+    def _process_order(self, isin: str, direction: OrderDirection):
+        """
+        Logic for processing and creating a single order.
+        This runs in a separate thread.
+        """
+
+        # 1. Read Current Market State (Requires Lock)
+        with self._lock:
+            current_yield = self.get_yield_value_by_direction(isin, direction)
+
+        # 2. Generate New Yield (Safe without Lock)
+        new_yield = self.generate_new_yield_by_direction(current_yield, direction)
+
+        # 3. Adjust Yield Loop (Requires Lock for reading opposite yield)
+        # Note: We keep this loop thread-safe by wrapping relevant calls in the lock
+        # and only releasing it for the sleep/order creation.
+        while True:
+            is_valid = self.check_is_yield_valid(new_yield)
+
+            # Check for match (requires reading market state)
+            with self._lock:
+                # Re-check current state, as another thread might have updated the opposite side
+                match_detected = self.make_match(new_yield, isin, direction)
+
+            if not match_detected and is_valid:
+                break
+
+            if self.debug:
+                reason = "Match detected" if match_detected else "Yield invalid"
+                print(
+                    f"[{threading.current_thread().name}] {reason} for {isin} {direction}. Adjusting yield."
+                )
+
+            # Adjust yield
+            new_yield = self.generate_new_yield_by_direction(new_yield, direction)
+            new_yield = self.adjust_yield_if_invalid(new_yield, isin, direction)
+
+            if self.debug:
+                print(
+                    f"[{threading.current_thread().name}] Adjusted new yield for {isin} {direction} to {new_yield:.4f}"
+                )
+
+        # 4. Update Market State (Requires Lock)
+        with self._lock:
+            if self.debug:
+                print(
+                    f"[{threading.current_thread().name}] Updating {isin} {direction} from {current_yield:.4f} to {new_yield:.4f}"
+                )
+            self.set_value_market(isin, direction, new_yield)
+            self._save_state()  # Save state immediately after update
+
+        # 5. Create Order (I/O-bound, does NOT need Lock)
+        try:
+            order_payload = OrdersPayloadFactory.create(
+                direction=direction,
+                expiration="day",
+                order_type=OrderType.LIMIT,
+                quantity="100",
+                security_id=isin,
+                yield_value=f"{new_yield:.4f}",
+            )
+            create_order(order_payload)
+            if self.debug:
+                print(
+                    f"[{threading.current_thread().name}] Order created successfully for {isin} {direction}"
+                )
+        except Exception as e:
+            print(
+                f"[{threading.current_thread().name}] Error creating order for {isin} {direction}: {e}"
+            )
+
+        # 6. Sleep (I/O-bound, does NOT need Lock)
+        # time.sleep(self.time_sleep)
+
+    def bulk_order_creation2(self):
+        import signal
+        import sys
+
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+
+        self._load_state()
+
+        limit_iteration = 500
+
+        # Use ThreadPoolExecutor for concurrent execution
+        # Max workers limits the number of threads created
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            while limit_iteration > 0:
+                limit_iteration -= 1
+
+                # Get the next security/direction (uses internal lock)
+                try:
+                    isin, direction = self.get_isin_and_direction_from_key()
+                except IndexError:
+                    print("No securities found. Exiting loop.")
+                    break
+
+                # Submit the order creation task to the thread pool
+                executor.submit(self._process_order, isin, direction)
+
+                # Control the rate at which new tasks are submitted
+                time.sleep(
+                    0.01
+                )  # Small sleep to prevent excessive thread spawning if tasks are very short
+
+        print("Bulk order creation finished.")
+
 
 # def simulate_market_volatility():
 #     print("Starting market volatility simulation...")
@@ -234,7 +345,7 @@ def create_bulk_orders():
     simulator = CreateBulkOrders(
         quote_id=QUOTE_ID, time_sleep=SLEEP_TIME_POST_QUOTE_FEED
     )
-    simulator.bulk_order_creation()
+    simulator.bulk_order_creation2()
 
 
 if __name__ == "__main__":
