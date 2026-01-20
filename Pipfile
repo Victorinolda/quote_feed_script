@@ -12,6 +12,7 @@ python-dotenv = "==1.1.1"
 urllib3 = "==2.4.0"
 pandas = "*"
 requests = "*"
+numpy = "*"
 
 [dev-packages]
 

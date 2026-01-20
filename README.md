@@ -1,4 +1,5 @@
 # quote_feed_script
+
 to run this script, you need to run the following commands:
 
 ```bash
@@ -11,40 +12,34 @@ after that, to start the script, run:
 just init
 ```
 
-this will copy the `.env.example` file to `.env` and install the dependencies.
+this will copy the `.env.example` file to `.env.local` and install the dependencies using pipenv.
+by default the `.env.local`file is created, but you can create any other file like `.env.dev` or `.env.qa`,
+to use a diferent environment, you can run any of the following commands with the correct environment name:
 
-before running the script, you need to set the environment variables in the `.env` file. You can use the `.env.example` file as a reference.
-after setting the environment variables, you can run some of the following commands:
-
-```bash
-just simulate
-```
-
-- this will run the script to create multiple quotes for all the active securities, with a yield of 10
+By default every command uses the `.env.local` file, but you can specify another env file by adding the env name after the command.
 
 ```bash
-just single
+just multiple env
 ```
 
-- this will create a single quote for the security specified in the `.env` file, with a yield of 10
+this will run the script to create quotes for every m-bono active in the specified environment.
 
 ```bash
-just both
+just single direction env
 ```
 
-- this will create ask and bid quotes for the security specified in the `.env` file, with a yield of 10
-
-if you need to run the script with a different yield, you can run the following command:
+this will create qoutes for the specified security find in the env file, for a single direction (ask or bid).
+by default it will create for the ask direction in the local environment.
 
 ```bash
-pipenv run python main.py multiple <yield>
+just both env
 ```
 
-this will run the script to create multiple quotes for all the active securities, with the specified yield.
-or
+this will create qoutes for the specified security find in the env file, for ask and bid directions.
 
 ```bash
-pipenv run python main.py single <direction>  <yield>
+just simulate env
 ```
 
-this will create a single quote for the security specified in the `.env` file, with the specified yield and direction (ask, bid or both).
+this will simulate a market volatility for all the actives securities with a sleep time, that can we modifiend in the env file
+for the specified environment.
