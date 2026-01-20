@@ -1,13 +1,23 @@
-
 init:
-    -cp --no-clobber .env.example .env
+    -cp --no-clobber .env.example .env.local
     pipenv install --dev
 
-simulate:
-    pipenv run python3 main.py multiple 10
+# Run with multiple streams execution (local env, yield 10)
+multiple env="local":
+    pipenv run python3 main.py --env {{env}} --execution multiple --yield 10
 
-single:
-    pipenv run python3 main.py single 10
+# Run with single stream execution (local env, yield 10)
+single direction="ask" env="local":
+    @if [ "{{direction}}" != "ask" ] && [ "{{direction}}" != "bid" ]; then \
+        echo "Error: direction must be 'ask' or 'bid'"; \
+        exit 1; \
+    fi
+    pipenv run python3 main.py --env {{env}} --execution single --yield 10 --direction {{direction}}
 
-both:
-    pipenv run python3 main.py single 10 both
+# Run with both directions (local env, yield 9.99, direction both)
+both env="local":
+    pipenv run python3 main.py --env {{env}} --execution single --yield 9.99 --direction both
+
+# Run market simulation (local env)
+simulate env="local":
+    pipenv run python3 main.py --env {{env}} --execution simulate

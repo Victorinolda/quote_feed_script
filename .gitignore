@@ -2,3 +2,7 @@
 __pycache__/
 *.txt
 .env
+*.json
+.env.local
+.env.dev
+.env.qa
